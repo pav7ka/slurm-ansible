@@ -1,0 +1,25 @@
+[Unit]
+Description=app
+After=network.target
+
+[Service]
+
+### var env
+Environment="SECRET_KEY_BASE={{ secret_key_base }}"
+Environment="RAILS_ENV={{ rails_env }}"
+Environment="RAILS_LOG_TO_STDOUT={{ rails_log_to_stdout }}"
+Environment="DB_HOST={{ db_host }}"
+Environment="DB_PORT={{ db_port }}"
+Environment="DB_NAME={{ db_name }}"
+Environment="DB_USER={{ db_user }}"
+Environment="DB_PASSWORD={{ db_password }}"
+
+###
+User=root
+Group=root
+
+WorkingDirectory=/app
+ExecStart=/bin/bash -lc /app/app.sh
+
+[Install]
+WantedBy=multi-user.target

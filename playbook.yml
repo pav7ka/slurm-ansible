@@ -1,0 +1,11 @@
+---
+- hosts: "all"
+  become: true
+  gather_facts: false
+  roles: 
+#    - python
+    - postgre
+    - nginx
+    - app
+
+...

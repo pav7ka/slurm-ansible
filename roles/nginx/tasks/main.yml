@@ -1,0 +1,59 @@
+---
+- name: "Ставим пакеты yum utils"
+  ansible.builtin.yum:
+    name: "yum-utils"
+    state: "present"
+    update_cache: true
+
+- name: "Ставим ключ от репы nginx"
+  ansible.builtin.rpm_key:
+    key: https://nginx.org/keys/nginx_signing.key
+    state: "present"
+
+- name: "Кидаем репо файл nginx"
+  ansible.builtin.copy:
+    src: "nginx.repo"
+    dest: "/etc/yum.repos.d/nginx.repo"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+    backup: true
+
+#- name: "Проверяем существует ли файл"
+#  ansible.builtin.stat:
+#    path: "/etc/yum.repos.d/nginx.repo"
+#  register: nginx_repo
+#
+#- name: "yum-config-manager --enable nginx-stable"
+#  ansible.builtin.shell:
+#    cmd: "yum-config-manager --enable nginx-stable"
+#  when: not nginx.repo.exists
+
+- name: "Ставим пакет nginx"
+  ansible.builtin.yum:
+    name: "nginx"
+    enablerepo: "nginx-stable"
+    state: "present"
+
+- name: "Кидаем конфиг файл nginx"
+  ansible.builtin.copy:
+    src: "nginx.conf"
+    dest: "/etc/nginx/nginx.conf"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+    backup: true
+
+- name: "Открываем порт firewalld"
+  ansible.posix.firewalld:
+    port: "{{ nginx_port }}"
+    permanent: true
+    state: "enabled"
+
+- name: "restart_nginx"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+    enabled: true
+
+...

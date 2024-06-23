@@ -1,0 +1,97 @@
+---
+- name: "Ставим пакеты репозитория + необходимые для сборки gem"
+  ansible.builtin.yum:
+    name:
+      - centos-release-scl
+      - centos-release-scl-rh
+      - libxml2
+      - libxml2-devel
+      - zlib-devel
+      - openssl      
+      - openssl-devel
+      - gcc
+      - gcc-c++
+      - make
+      - libxslt
+      - libxslt-devel
+      - postgresql-devel
+    state: "present"
+    update_cache: true
+
+- name: "Ставим пакеты Ruby"
+  ansible.builtin.yum:
+    name:
+      - rh-ruby26
+      - rh-ruby26-ruby-devel
+      - rh-ruby26-rubygems
+      - rh-ruby26-rubygem-bundler
+      - rh-ruby26-rubygem-xmlrpc
+      - rh-ruby26-rubygem-pg
+      - rh-nodejs14
+    enablerepo: "centos-sclo-rh"
+    state: "present"
+
+# т.к. запускает шел то не работает
+#- name: ""
+#  ansible.builtin.command:
+#    cmd: "{{ item }}"
+#  loop:
+#    - scl enable rh-ruby26 bash&
+#    - scl enable rh-nodejs14 bash&
+
+- name: "Копируем файл с путями для Ruby"
+  ansible.builtin.copy:
+    src: "rh_enable.sh"
+    dest: "/etc/profile.d"
+    owner: "root"
+    group: "root"
+    mode: '0644'
+    backup: true
+
+- name: "Отключаем SELINUX"
+  ansible.builtin.lineinfile:
+    path: "/etc/selinux/config"
+    regexp: "^SELINUX="
+    line: "SELINUX=disabled"
+
+- name: ""
+  ansible.builtin.reboot:
+
+- name: "Копируем файлы приложения"
+  ansible.builtin.copy:
+    src: "files/app/"
+    dest: "/app/"
+#    remote_src: true
+    mode: "preserve"
+
+# отрабатывает норм
+# но после выходит с предупреждением и кодом закрытия не 0
+# удалил пакет и заново запустил теперь без ошибки , хрень какая то
+- name: "Собираем gem"
+  ansible.builtin.shell:
+    cmd: |
+      bash -lc bundle config build.nokogiri --use-system-libraries &&
+      bash -lc bundle install --clean --no-cache --without development --gemfile=/app/Gemfile
+    chdir: "/app"
+  ignore_errors: true
+#  community.general.bundler:
+#    state: present
+#    gemfile: /app
+
+- name: "Копируем сервис файл"
+  ansible.builtin.template:
+    src: "app.service.j2"
+#    dest: /usr/lib/systemd/system
+    dest: "/etc/systemd/system/app.service"
+    owner: "root"
+    group: "root"
+    mode: '644'
+    backup: true
+
+- name: "Стартуем приложение"
+  ansible.builtin.service:
+    name: "app"
+    state: "started"
+    enabled: true
+
+...

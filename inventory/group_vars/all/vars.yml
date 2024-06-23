@@ -1,0 +1,12 @@
+---
+db_user: "app"
+db_password: "app"
+db_name: "app"
+db_port: '5432'
+db_host: "127.0.0.1"
+rails_log_to_stdout: '1'
+rails_env: "production"
+secret_key_base: "1234567890"
+nginx_port: "80/tcp"
+
+...

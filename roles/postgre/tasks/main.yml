@@ -1,0 +1,79 @@
+---
+- name: "Ставим пакеты PostgreSQL"
+  ansible.builtin.yum:
+    name:
+      - postgresql
+      - postgresql-server
+      - python-psycopg2
+    state: "present"
+    update_cache: true
+
+- name: "Проверяем существует ли файл , если нет инициализируем инстанс"
+  ansible.builtin.stat:
+    path: "/var/lib/pgsql/data/pg_hba.conf"
+  register: pgsql_data
+
+- name: "Инициализация ДБ"
+  ansible.builtin.shell:
+    cmd: "postgresql-setup initdb"
+  when: not pgsql_data.stat.exists
+
+- name: "Стартуем сервис"
+  ansible.builtin.service:
+    name: "postgresql"
+    state: "started"
+    enabled: true
+
+- name: "Создаем БД"
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+  become: true
+  become_user: postgres
+  
+- name: "Создаем пользователя"
+  community.postgresql.postgresql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    state: "present"
+  become: true
+  become_user: postgres
+
+- name: "Раздаем привелегии пользователю app"
+  community.postgresql.postgresql_privs:
+    type: "database"
+    database: "{{ db_name }}"
+    roles: "{{ db_user }}"
+    grant_option: false
+    privs: all
+  become: true
+  become_user: postgres
+
+#- name: "меняем аутентификацию пользователю на логопас"
+#  community.postgresql.postgresql_pg_hba:
+#    dest: "/var/lib/pgsql/data/pg_hba.conf"
+#    contype: host
+#    databases: all
+#    method: md5
+#    users: "{{ db_user }}"
+#    create: true
+#  become: true
+#  become_user: postgres
+#  notify: restart_postgres
+
+- name: "проблемы с пакетом ipaddress у таски выше , пришлось тупо сделать обходной путь копированием"
+  ansible.builtin.copy:
+    src: "pg_hba.conf"
+    dest: "/var/lib/pgsql/data/pg_hba.conf"
+#    owner: postgres
+#    group: postgres
+#    mode: '0600'
+    backup: true
+#  notify: restart_postgres
+
+- name: "restart_postgres"
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted
+
+...
