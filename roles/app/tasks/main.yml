@@ -7,7 +7,7 @@
       - libxml2
       - libxml2-devel
       - zlib-devel
-      - openssl      
+      - openssl
       - openssl-devel
       - gcc
       - gcc-c++
@@ -32,7 +32,7 @@
     state: "present"
 
 # т.к. запускает шел то не работает
-#- name: ""
+# - name: ""
 #  ansible.builtin.command:
 #    cmd: "{{ item }}"
 #  loop:
@@ -54,7 +54,7 @@
     regexp: "^SELINUX="
     line: "SELINUX=disabled"
 
-- name: ""
+- name: Reboot
   ansible.builtin.reboot:
 
 - name: "Копируем файлы приложения"
@@ -74,6 +74,8 @@
       bash -lc bundle install --clean --no-cache --without development --gemfile=/app/Gemfile
     chdir: "/app"
   ignore_errors: true
+  register: bundle_install
+  changed_when: bundle_install.rc != 0
 #  community.general.bundler:
 #    state: present
 #    gemfile: /app
