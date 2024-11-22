@@ -19,12 +19,12 @@
     mode: '0644'
     backup: true
 
-#- name: "Проверяем существует ли файл"
+# - name: "Проверяем существует ли файл"
 #  ansible.builtin.stat:
 #    path: "/etc/yum.repos.d/nginx.repo"
 #  register: nginx_repo
 #
-#- name: "yum-config-manager --enable nginx-stable"
+# - name: "yum-config-manager --enable nginx-stable"
 #  ansible.builtin.shell:
 #    cmd: "yum-config-manager --enable nginx-stable"
 #  when: not nginx.repo.exists
@@ -50,7 +50,7 @@
     permanent: true
     state: "enabled"
 
-- name: "restart_nginx"
+- name: "Restart_nginx"
   ansible.builtin.service:
     name: "nginx"
     state: "restarted"

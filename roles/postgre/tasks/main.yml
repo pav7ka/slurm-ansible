@@ -14,9 +14,11 @@
   register: pgsql_data
 
 - name: "Инициализация ДБ"
-  ansible.builtin.shell:
-    cmd: "postgresql-setup initdb"
-  when: not pgsql_data.stat.exists
+  ansible.builtin.command: "postgresql-setup initdb"
+#    cmd: "postgresql-setup initdb"
+  register: pgsql_data
+#  when: not pgsql_data.stat.exists
+  changed_when: pgsql_data.rc != 0
 
 - name: "Стартуем сервис"
   ansible.builtin.service:
@@ -30,7 +32,7 @@
     state: "present"
   become: true
   become_user: postgres
-  
+
 - name: "Создаем пользователя"
   community.postgresql.postgresql_user:
     name: "{{ db_user }}"
@@ -49,7 +51,7 @@
   become: true
   become_user: postgres
 
-#- name: "меняем аутентификацию пользователю на логопас"
+# - name: "меняем аутентификацию пользователю на логопас"
 #  community.postgresql.postgresql_pg_hba:
 #    dest: "/var/lib/pgsql/data/pg_hba.conf"
 #    contype: host
@@ -61,7 +63,7 @@
 #  become_user: postgres
 #  notify: restart_postgres
 
-- name: "проблемы с пакетом ipaddress у таски выше , пришлось тупо сделать обходной путь копированием"
+- name: "Проблемы с пакетом ipaddress у таски выше , пришлось тупо сделать обходной путь копированием"
   ansible.builtin.copy:
     src: "pg_hba.conf"
     dest: "/var/lib/pgsql/data/pg_hba.conf"
@@ -71,7 +73,7 @@
     backup: true
 #  notify: restart_postgres
 
-- name: "restart_postgres"
+- name: "Restart_postgres"
   ansible.builtin.service:
     name: postgresql
     state: restarted
